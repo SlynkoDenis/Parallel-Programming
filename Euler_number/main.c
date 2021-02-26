@@ -15,34 +15,20 @@ int main(int argc, char **argv) {
     // variables for calculation on slave processes' sides
     double local_fact;
     double local_e;
-    int received_start = 0;
-    int received_end = 0;
 
     MPI_Status status;
     int root_process = 0;
-    int sender = 0;
     int my_id = 0;
     int num_procs = 0;
     int ierr = MPI_Init(&argc, &argv);
     ierr = MPI_Comm_rank(MPI_COMM_WORLD, &my_id);
     ierr = MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
+    // average number of iterations for every process
+    int avg_rows_per_process = num_of_iterations / num_procs + 1;
+
     if (my_id == root_process) {
         double start_time = MPI_Wtime();
-        // average number of iterations for every process
-        int avg_rows_per_process = num_of_iterations / num_procs + 1;
-
-        // Send ranges for partial sums in slave processes
-        for (int an_id = 1; an_id < num_procs; ++an_id) {
-            start_index = an_id * avg_rows_per_process + 1;
-            end_index = (an_id + 1) * avg_rows_per_process;
-
-            ierr = MPI_Send(&start_index, 1 , MPI_INT,
-                             an_id, SEND_TAG, MPI_COMM_WORLD);
-
-            ierr = MPI_Send(&end_index, 1, MPI_INT,
-                             an_id, SEND_TAG, MPI_COMM_WORLD);
-        }
 
         for (int i = 1; i <= avg_rows_per_process + 1; ++i) {
             e += 1 / fact;
@@ -53,9 +39,6 @@ int main(int argc, char **argv) {
         for (int an_id = 1; an_id < num_procs; ++an_id) {
             ierr = MPI_Recv(&local_e, 1, MPI_DOUBLE, MPI_ANY_SOURCE,
                              MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-            sender = status.MPI_SOURCE;
-
             e += local_e;
         }
 
@@ -63,15 +46,10 @@ int main(int argc, char **argv) {
 
         printf("e = %.20f, elapsed time = %.20fs \n", e, end_time - start_time);
     } else {
-        // Receive range
-        ierr = MPI_Recv(&received_start, 1, MPI_INT,
-                         root_process, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-        ierr = MPI_Recv(&received_end, 1, MPI_INT,
-                         root_process, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-        start_index = received_start;
-        end_index = received_end > num_of_iterations + 1 ? num_of_iterations : received_end;
+        // Calculate range for execution on current process
+        int tmp_end = (my_id + 1) * avg_rows_per_process;
+        start_index = my_id * avg_rows_per_process + 1;
+        end_index = tmp_end > num_of_iterations + 1 ? num_of_iterations : tmp_end;
 
         local_e = 0.0;
         local_fact = 2.0;

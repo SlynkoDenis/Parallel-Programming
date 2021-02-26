@@ -1,4 +1,6 @@
 **/cmake-build-debug
 **/CMakeLists.txt
+**/*.out
+**/.idea
 Euler_number/main
 lab1.pdf
