@@ -2,5 +2,6 @@
 **/CMakeLists.txt
 **/*.out
 **/.idea
+**/.vscode
 Euler_number/main
 lab1.pdf
