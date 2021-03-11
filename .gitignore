@@ -3,5 +3,6 @@
 **/*.out
 **/.idea
 **/.vscode
+**/venv
 Euler_number/main
 lab1.pdf

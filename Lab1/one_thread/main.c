@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include "../equation.h"
@@ -19,6 +20,9 @@ int main() {
     printf("Elapsed time equals %.20f\n", elapsed);
 
     printf("%d %d\n", result.K, result.M);
+
+    FILE* fd = fopen("result.csv", "wb");
+    assert(fd);
 
     return 0;
 }
