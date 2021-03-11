@@ -1,0 +1,7 @@
+All calculations were conducted for length = 40000000 with 4 processes involved.
+random data - around 3.4s
+consecutive numbers - around 1.63s
+reversed consecutive numbers - around 1.8s
+check mark - around 1.8s
+saw - around 1.8s
+
