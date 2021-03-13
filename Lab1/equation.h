@@ -22,4 +22,5 @@ struct solution {
 };
 
 struct equation init();
+void delete(struct solution sol);
 struct solution solve(struct equation, double, double);

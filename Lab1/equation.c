@@ -6,16 +6,19 @@
 // TODO: change functions in the equation according to the problem
 
 double f(double t, double x) {
-    return t * x;
+    return x * t;
 }
+
 
 double phi(double x) {
     return x;
 }
 
+
 double psi(double t) {
-    return t;
+    return -1.0 * t;
 }
+
 
 struct equation init() {
     struct equation result;
@@ -29,6 +32,12 @@ struct equation init() {
     return result;
 }
 
+
+void delete(struct solution sol) {
+    free(sol.values);
+}
+
+
 // Leap-frog method solver
 struct solution solve(struct equation eq, double tau, double h) {
     assert(h > 0.0);
@@ -36,13 +45,9 @@ struct solution solve(struct equation eq, double tau, double h) {
     assert(eq.phi(0.0) == eq.psi(0.0));
 
     struct solution result;
-    result.K = (unsigned)(eq.T / tau);
-    result.M = (unsigned)(eq.X / h);
+    result.K = (unsigned)(eq.T / tau) + 1;
+    result.M = (unsigned)(eq.X / h) + 1;
 
-    result.t = (double*) calloc(result.K, sizeof(double));
-    assert(result.t);
-    result.x = (double*) calloc(result.M, sizeof(double));
-    assert(result.x);
     result.values = (double*) calloc(result.K * result.M, sizeof(double));
     assert(result.values);
 
@@ -55,17 +60,20 @@ struct solution solve(struct equation eq, double tau, double h) {
 
     // First time step must be done with a scheme other than leap-frog
     for (int i = 1; i < result.M; ++i) {
-        result.values[result.M + i] = result.values[i] + tau * (eq.f(tau, i * h) - 0.5 * eq.a / h * (result.values[i + 1] - result.values[i - 1]) +
-                                                                0.5 * eq.a * tau / h / h * (result.values[i + 1] - 2.0 * result.values[i] + result.values[i - 1]));
+        result.values[result.M + i] = result.values[i] + tau * (eq.f(0.0, i * h) - eq.a / h * (result.values[i] - result.values[i - 1]));
     }
 
     // After that the leap-frog method is implemented
-    for (int i = 2; i < result.M; ++i) {
-        for (int j = 1; j < result.K; ++j) {
+    for (int i = 2; i < result.K; ++i) {
+        int j = 1;
+        for (; j < result.M - 1; ++j) {
             result.values[result.M * i + j] = result.values[result.M * (i - 2) + j] + tau * (2.0 * eq.f((i - 1) * tau, j * h) -
                                                                                              eq.a / h * (result.values[result.M * (i - 1) + j + 1] -
                                                                                              result.values[result.M * (i - 1) + j - 1]));
         }
+        result.values[result.M * i + j] = result.values[result.M * (i - 1) + j] + tau * (eq.f((i - 1) * tau, j * h) -
+                                                                                         eq.a / h * (result.values[result.M * (i - 1) + j] -
+                                                                                         result.values[result.M * (i - 1) + j - 1]));
     }
 
     return result;

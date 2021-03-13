@@ -4,5 +4,7 @@
 **/.idea
 **/.vscode
 **/venv
+!Lab1/one_thread/CMakeLists.txt
 Euler_number/main
+Lab1/multi_thread/main
 lab1.pdf
