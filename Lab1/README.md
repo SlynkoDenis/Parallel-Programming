@@ -1,10 +1,11 @@
-#Lab Work 1
-###Task:
+# Lab Work 1
+
+### Task:
 * Implement one-thread solver of convection–diffusion equation for a given velocity and source of sinks function.
 
 ![](images/equation.png?raw=true)
 * With the use of MPI develop a multi-thread program, which solves the equation given in the first sub-task.
-###Implementation details
+### Implementation details
 * The leap-frog scheme was chosen for the both solutions:
   
 ![](images/scheme.png?raw=true)
