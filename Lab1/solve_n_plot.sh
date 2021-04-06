@@ -26,16 +26,13 @@ if [[ $MODE = "one" ]]; then
     rm data.csv
 else
     if [[ $MODE = "multi" ]]; then
-        SCRIPT=$(readlink -f "$0")
-        BASEDIR=$(dirname "$SCRIPT")
-
         cd multi_thread
         mpicc main.c ../equation.c -o main -lm || exit 1
-        mpirun -np 4 $BASEDIR/multi_thread/main || exit 1
+        mpirun -np 4 ./main || exit 1
 
-        cd $BASEDIR
+        cd ../
         ./graph.py --dir=multi_thread || exit 1
-        rm $BASEDIR/multi_thread/data.csv
+        rm multi_thread/data.csv
     else
         echo "Error: solving mode is unresolved"
         get_usage_message
