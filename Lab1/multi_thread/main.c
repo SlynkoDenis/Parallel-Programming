@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
             result.values[i * points_per_process] = eq.psi(i * tau);
         }
 
-        MPI_Request requests[2];
+        MPI_Request requests[3];
 
         // First time step must be done with a scheme other than leap-frog
         for (int i = 1; i < points_per_process - 1; ++i) {
@@ -55,11 +55,19 @@ int main(int argc, char** argv) {
                                                     tau * (eq.f(0.0, (points_per_process - 1) * h) - 0.5 * eq.a / h * (right_corner - result.values[points_per_process - 2]) +
                                                            0.5 * eq.a * tau / h / h * (right_corner - 2.0 * result.values[points_per_process - 1] +
                                                                                        result.values[points_per_process - 2]));
-        MPI_Isend(result.values + 2 * points_per_process - 1, 1, MPI_DOUBLE, root_process + 1, SEND_TAG, MPI_COMM_WORLD, requests + 1);
+        MPI_Isend(result.values + 2 * points_per_process - 1, 1, MPI_DOUBLE, root_process + 1, SEND_TAG, MPI_COMM_WORLD, requests + 2);
+
+        assert(MPI_Recv_init(&right_corner, 1, MPI_DOUBLE, root_process + 1, MPI_ANY_TAG, MPI_COMM_WORLD,
+                             requests) == MPI_SUCCESS);
+        // Hack to make a template for sending the bounder value
+        // In this var the value from the result.values array will be written
+        double boundary_value = 0.0;
+        assert(MPI_Send_init(&boundary_value, 1, MPI_DOUBLE, root_process + 1,
+                             SEND_TAG, MPI_COMM_WORLD, requests + 1) == MPI_SUCCESS);
 
         // After that the leap-frog method is implemented
         for (int i = 2; i < result.K; ++i) {
-            MPI_Irecv(&right_corner, 1, MPI_DOUBLE, root_process + 1, MPI_ANY_TAG, MPI_COMM_WORLD, requests);
+            MPI_Start(requests);
 
             int j = 1;
             for (; j < points_per_process - 1; ++j) {
@@ -75,9 +83,14 @@ int main(int argc, char** argv) {
                                                                eq.a / h * (right_corner - result.values[points_per_process * (i - 1) + j - 1]));
 
             if (i != result.K - 1) {
-                MPI_Isend(result.values + points_per_process * (i + 1) - 1, 1, MPI_DOUBLE, root_process + 1, SEND_TAG, MPI_COMM_WORLD, requests + 1);
+                boundary_value = result.values[points_per_process * (i + 1) - 1];
+                MPI_Wait(requests + 1, &status);
+                MPI_Start(requests + 1);
             }
         }
+        MPI_Request_free(requests);
+        MPI_Request_free(requests + 1);
+
         gettimeofday(&end, 0);
         long seconds = end.tv_sec - begin.tv_sec;
         long microseconds = end.tv_usec - begin.tv_usec;
@@ -122,7 +135,7 @@ int main(int argc, char** argv) {
             result.values[i - left_index] = eq.phi(i * h);
         }
 
-        MPI_Request requests[4];
+        MPI_Request requests[6];
         MPI_Status stats[4];
 
         // First time step must be done with a scheme other than leap-frog
@@ -136,13 +149,19 @@ int main(int argc, char** argv) {
                                                     tau * (eq.f(0.0, (right_index - 1) * h) - 0.5 * eq.a / h * (right_corner - result.values[points_per_process - 2]) +
                                                            0.5 * eq.a * tau / h / h * (right_corner - 2.0 * result.values[points_per_process - 1] +
                                                                                        result.values[points_per_process - 2]));
-        MPI_Isend(result.values + points_per_process, 1, MPI_DOUBLE, my_id - 1, SEND_TAG, MPI_COMM_WORLD, requests + 2);
-        MPI_Isend(result.values + 2 * points_per_process - 1, 1, MPI_DOUBLE, my_id + 1, SEND_TAG, MPI_COMM_WORLD, requests + 3);
+        MPI_Isend(result.values + points_per_process, 1, MPI_DOUBLE, my_id - 1, SEND_TAG, MPI_COMM_WORLD, requests + 4);
+        MPI_Isend(result.values + 2 * points_per_process - 1, 1, MPI_DOUBLE, my_id + 1, SEND_TAG, MPI_COMM_WORLD, requests + 5);
+
+        assert(MPI_Recv_init(&left_corner, 1, MPI_DOUBLE, my_id - 1, MPI_ANY_TAG, MPI_COMM_WORLD, requests) == MPI_SUCCESS);
+        assert(MPI_Recv_init(&right_corner, 1, MPI_DOUBLE, my_id + 1, MPI_ANY_TAG, MPI_COMM_WORLD, requests + 1) == MPI_SUCCESS);
+        double boundary_values[2] = {0.0, 0.0};
+        assert(MPI_Send_init(boundary_values, 1, MPI_DOUBLE, my_id - 1, SEND_TAG, MPI_COMM_WORLD, requests + 2) == MPI_SUCCESS);
+        assert(MPI_Send_init(boundary_values + 1, 1, MPI_DOUBLE, my_id + 1, SEND_TAG,
+                             MPI_COMM_WORLD, requests + 3) == MPI_SUCCESS);
 
         // After that the leap-frog method is implemented
         for (int i = 2; i < result.K; ++i) {
-            MPI_Irecv(&left_corner, 1, MPI_DOUBLE, my_id - 1, MPI_ANY_TAG, MPI_COMM_WORLD, requests);
-            MPI_Irecv(&right_corner, 1, MPI_DOUBLE, my_id + 1, MPI_ANY_TAG, MPI_COMM_WORLD, requests + 1);
+            MPI_Startall(2, requests);
 
             int j = 1;
             for (; j < points_per_process - 1; ++j) {
@@ -162,14 +181,19 @@ int main(int argc, char** argv) {
                                                                eq.a / h * (right_corner - result.values[points_per_process * (i - 1) + j - 1]));
 
             if (i != result.K - 1) {
-                MPI_Isend(result.values + points_per_process * i, 1, MPI_DOUBLE, my_id - 1, SEND_TAG, MPI_COMM_WORLD, requests + 2);
-                MPI_Isend(result.values + points_per_process * (i + 1) - 1, 1, MPI_DOUBLE, my_id + 1, SEND_TAG, MPI_COMM_WORLD, requests + 3);
+                boundary_values[0] = result.values[points_per_process * i];
+                boundary_values[1] = result.values[points_per_process * (i + 1) - 1];
+                MPI_Waitall(2, requests + 2, stats + 2);
+                MPI_Startall(2, requests + 2);
             }
+        }
+        for (int i = 0; i < 4; ++i) {
+            MPI_Request_free(requests + i);
         }
 
         // Send part of solution to the root process
-        MPI_Isend(result.values, result.K * points_per_process, MPI_DOUBLE, root_process, SEND_TAG, MPI_COMM_WORLD, requests);
-        MPI_Wait(requests, &status);
+        MPI_Isend(result.values, result.K * points_per_process, MPI_DOUBLE, root_process, SEND_TAG, MPI_COMM_WORLD, requests + 4);
+        MPI_Wait(requests + 4, &status);
     } else {
         int left_index = my_id * points_per_process;
 
@@ -178,7 +202,7 @@ int main(int argc, char** argv) {
             result.values[i - left_index] = eq.phi(i * h);
         }
 
-        MPI_Request requests[2];
+        MPI_Request requests[3];
 
         // First time step must be done with a scheme other than leap-frog
         result.values[points_per_process] = result.values[0] + tau * (eq.f(0.0, left_index * h) - 0.5 * eq.a / h * (result.values[1] - left_corner) +
@@ -189,11 +213,15 @@ int main(int argc, char** argv) {
         }
         result.values[2 * points_per_process - 1] = result.values[points_per_process - 1] + tau * (eq.f(0.0, (result.M - 1) * h) -
                                                     eq.a / h * (result.values[points_per_process - 1] - result.values[points_per_process - 2]));
-        MPI_Isend(result.values + 2 * points_per_process - 1, 1, MPI_DOUBLE, my_id - 1, SEND_TAG, MPI_COMM_WORLD, requests + 1);
+        MPI_Isend(result.values + 2 * points_per_process - 1, 1, MPI_DOUBLE, my_id - 1, SEND_TAG, MPI_COMM_WORLD, requests + 2);
+
+        assert(MPI_Recv_init(&left_corner, 1, MPI_DOUBLE, my_id - 1, MPI_ANY_TAG, MPI_COMM_WORLD, requests) == MPI_SUCCESS);
+        double boundary_value = 0.0;
+        assert(MPI_Send_init(&boundary_value, 1, MPI_DOUBLE, my_id - 1, SEND_TAG, MPI_COMM_WORLD, requests + 1) == MPI_SUCCESS);
 
         // After that the leap-frog method is implemented
         for (int i = 2; i < result.K; ++i) {
-            MPI_Irecv(&left_corner, 1, MPI_DOUBLE, my_id - 1, MPI_ANY_TAG, MPI_COMM_WORLD, requests);
+            MPI_Start(requests);
 
             int j = 1;
             for (; j < points_per_process - 1; ++j) {
@@ -213,13 +241,17 @@ int main(int argc, char** argv) {
                                                                result.values[points_per_process * (i - 1) + j - 1]));
 
             if (i != result.K - 1) {
-                MPI_Isend(result.values + points_per_process * i, 1, MPI_DOUBLE, my_id - 1, SEND_TAG, MPI_COMM_WORLD, requests + 1);
+                boundary_value = result.values[points_per_process * i];
+                MPI_Wait(requests + 1, &status);
+                MPI_Start(requests + 1);
             }
         }
+        MPI_Request_free(requests);
+        MPI_Request_free(requests + 1);
 
         // Send part of solution to the root process
-        MPI_Isend(result.values, result.K * points_per_process, MPI_DOUBLE, root_process, SEND_TAG, MPI_COMM_WORLD, requests);
-        MPI_Wait(requests, &status);
+        MPI_Isend(result.values, result.K * points_per_process, MPI_DOUBLE, root_process, SEND_TAG, MPI_COMM_WORLD, requests + 2);
+        MPI_Wait(requests + 2, &status);
     }
 
     delete(result);

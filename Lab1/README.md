@@ -11,7 +11,7 @@
 ![](images/scheme.png?raw=true)
 ![](images/formula.png?raw=true)
 
-* For instance with 100000 time points and 2000 coordinate points the elapsed time for one-thread and multi-thread programs equals 2.45s and 1.13s respectively.
+* For instance with 100000 time points and 2000 coordinate points the elapsed time for one-thread and multi-thread programs equals 2.45s and 0.97s respectively.
 
 * The solution graph for instance of the task with `a = 1`, `f = x * t`, `phi(x) = x` and `psi(x) = -t` is shown below
 
