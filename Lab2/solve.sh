@@ -14,6 +14,12 @@ if [[ -z $MODE ]]; then
     exit 1
 fi
 
+if [[ -z $EPSILON ]]; then
+    echo "Error: epsilon is unspecified"
+    get_usage_message
+    exit 1
+fi
+
 if [[ $MODE = "one" ]]; then
     export MODE=0
     gcc main.c -lpthread -lm -O3
