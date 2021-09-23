@@ -43,8 +43,8 @@ int main(int argc, char **argv) {
     Matrix oneThreadCalculated = createMatrix(rowsInA, columnsInB);
     FILE *file = fopen("c_matrix.dat", "r");
     loadMatrixFromFile(&oneThreadCalculated, file);
-    if (areMatricesEqual(C, oneThreadCalculated)) {
-        printf("Result is correct\n");
+    if (!areMatricesEqual(C, oneThreadCalculated)) {
+        fprintf(stderr, "Result is incorrect!\n");
     }
     deleteMatrix(&oneThreadCalculated);
 
