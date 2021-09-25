@@ -28,13 +28,13 @@ int isPrime(int number) {
 int main(int argc, char **argv) {
     int n = 0;
     if (argc == 1) {
-        fprintf(stderr, "Number of terms wasn't provided; using default value 100\n");
-        n = 100;
+        fprintf(stderr, "Number of terms wasn't provided; using default value 1000\n");
+        n = 1000;
     } else {
         n = atoi(argv[1]);
         if (n < 1) {
             fprintf(stderr, "Value from stdin: %d < 1\n", n);
-            n = 100;
+            n = 1000;
         }
     }
 
@@ -67,22 +67,25 @@ int main(int argc, char **argv) {
 
 
     FILE *file = fopen("result.dat", "r");
-    assert(file);
-    for (int i = 0, end_index = n - 1; i < end_index; ++i) {
-        if (numbers[i] != -1) {
-            int tmp = 0;
-            if (fscanf(file, "%d", &tmp) != 1) {
-                fprintf(stderr, "Failed to retrieve number from file on %dth iteration\n", i);
-                return 1;
-            }
-            if (tmp != numbers[i]) {
-                fprintf(stderr, "Numbers %d and %d aren't matched\n", tmp, numbers[i]);
-                free(numbers);
-                return 1;
+    if (file) {
+        for (int i = 0, end_index = n - 1; i < end_index; ++i) {
+            if (numbers[i] != -1) {
+                int tmp = 0;
+                if (fscanf(file, "%d", &tmp) != 1) {
+                    fprintf(stderr, "Failed to retrieve number from file on %dth iteration\n", i);
+                    return 1;
+                }
+                if (tmp != numbers[i]) {
+                    fprintf(stderr, "Numbers %d and %d aren't matched\n", tmp, numbers[i]);
+                    free(numbers);
+                    return 1;
+                }
             }
         }
+        fclose(file);
+    } else {
+        fprintf(stderr, "Result data file isn't found, validation is impossible. Please generate file with generate_data.sh script\n");
     }
-    fclose(file);
 
     free(numbers);
     return 0;

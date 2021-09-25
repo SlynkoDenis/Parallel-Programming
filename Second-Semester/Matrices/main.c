@@ -12,13 +12,22 @@ int main(int argc, char **argv) {
     int columnsInA = 3;
     int columnsInB = 3;
 
-    Matrix A = createMatrix(rowsInA, columnsInA);
     FILE *aDescriptor = fopen("a_matrix.dat", "r");
+    if (!aDescriptor) {
+        fprintf(stderr, "A matrix file isn't found, execution is impossible\n");
+        return 1;
+    }
+    Matrix A = createMatrix(rowsInA, columnsInA);
     loadMatrixFromFile(&A, aDescriptor);
     fclose(aDescriptor);
 
-    Matrix B = createMatrix(columnsInA, columnsInB);
     FILE *bDescriptor = fopen("b_matrix.dat", "r");
+    if (!bDescriptor) {
+        fprintf(stderr, "B matrix file isn't found, execution is impossible\n");
+        deleteMatrix(&A);
+        return 1;
+    }
+    Matrix B = createMatrix(columnsInA, columnsInB);
     loadMatrixFromFile(&B, bDescriptor);
     fclose(bDescriptor);
 
@@ -40,13 +49,18 @@ int main(int argc, char **argv) {
         }
     }
 
-    Matrix oneThreadCalculated = createMatrix(rowsInA, columnsInB);
     FILE *file = fopen("c_matrix.dat", "r");
-    loadMatrixFromFile(&oneThreadCalculated, file);
-    if (!areMatricesEqual(C, oneThreadCalculated)) {
-        fprintf(stderr, "Result is incorrect!\n");
+    if (file) {
+        Matrix oneThreadCalculated = createMatrix(rowsInA, columnsInB);
+        loadMatrixFromFile(&oneThreadCalculated, file);
+        if (!areMatricesEqual(C, oneThreadCalculated)) {
+            fprintf(stderr, "Result is incorrect!\n");
+        }
+        deleteMatrix(&oneThreadCalculated);
+        fclose(file);
+    } else {
+        fprintf(stderr, "Result data file isn't found, validation is impossible. Please generate file with generate_data.sh script\n");
     }
-    deleteMatrix(&oneThreadCalculated);
 
     deleteMatrix(&A);
     deleteMatrix(&B);

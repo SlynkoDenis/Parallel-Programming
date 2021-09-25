@@ -25,17 +25,20 @@ int main(int argc, char **argv) {
     }
 
     FILE *file = fopen("result.dat", "r");
-    assert(file);
-    for (i = 0; i < n; ++i) {
-        float tmp = 0.0F;
-        fscanf(file, "%f", &tmp);
-        if (tmp != bArray[i]) {
-            fprintf(stderr, "Element on postition %d is incorrect: %f ! %f", i, bArray[i], tmp);
-            fclose(file);
-            return 1;
+    if (file) {
+        for (i = 0; i < n; ++i) {
+            float tmp = 0.0F;
+            fscanf(file, "%f", &tmp);
+            if (tmp != bArray[i]) {
+                fprintf(stderr, "Element on postition %d is incorrect: %f ! %f", i, bArray[i], tmp);
+                fclose(file);
+                return 1;
+            }
         }
+        fclose(file);
+    } else {
+        fprintf(stderr, "Result data file isn't found, validation is impossible. Please generate file with generate_data.sh script\n");
     }
-    fclose(file);
 
     free(array);
     free(bArray);
