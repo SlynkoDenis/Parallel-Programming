@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/bash -e
 
 get_usage_message() {
     echo "Usage: ./build.sh [filename: a.out by default]"
@@ -15,4 +15,4 @@ if [[ -z $FILENAME ]]; then
     FILENAME=a.out
 fi
 
-gcc -fopenmp -Wall -Werror main.c -o $FILENAME
+gcc -fopenmp -Wall -Werror main.c -lm -o $FILENAME

@@ -106,10 +106,8 @@ int areMatricesEqual(Matrix lhs, Matrix rhs) {
     }
 
     for (int i = 0, end_index = lhs.numberOfRows * lhs.numberOfColumns; i < end_index; ++i) {
-        for (int j = 0; j < end_index; ++j) {
-            if (lhs.elements[i] != rhs.elements[j]) {
-                return 0;
-            }
+        if (lhs.elements[i] != rhs.elements[i]) {
+            return 0;
         }
     }
 

@@ -12,7 +12,7 @@ static double calculate_factorial(int number) {
 
     return res;
 }
- 
+
 
 int main(int argc, char **argv) {
     int number_of_terms = 0;

@@ -2,15 +2,30 @@
 #include "matrix.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
+#include <sys/time.h>
 
 
 int main(int argc, char **argv) {
-    srand((unsigned int)time(NULL) / 2);
+    if (argc != 4) {
+        fprintf(stderr, "Dimensions of matrices are provided incorrectly; got %d arguments\n", argc - 1);
+        exit(1);
+    }
 
-    int rowsInA = 2;
-    int columnsInA = 3;
-    int columnsInB = 3;
+    int rowsInA = atoi(argv[1]);
+    if (rowsInA <= 0) {
+        fprintf(stderr, "Incorrect value was used as number of rows in A; got %d <= 0\n", rowsInA);
+        exit(1);
+    }
+    int columnsInA = atoi(argv[2]);
+    if (columnsInA <= 0) {
+        fprintf(stderr, "Incorrect value was used as number of columns in A; got %d <= 0\n", columnsInA);
+        exit(1);
+    }
+    int columnsInB = atoi(argv[3]);
+    if (columnsInB <= 0) {
+        fprintf(stderr, "Incorrect value was used as number of columns in B; got %d <= 0\n", columnsInB);
+        exit(1);
+    }
 
     FILE *aDescriptor = fopen("a_matrix.dat", "r");
     if (!aDescriptor) {
@@ -37,11 +52,14 @@ int main(int argc, char **argv) {
     int columnIndex = 0;
     int newElement = 0;
     int i = 0;
-    #pragma omp parallel for collapse(2) schedule(runtime) shared(A, B, C) private(rowIndex, columnIndex, newElement, i) default(none)
+
+    struct timeval begin, end;
+    gettimeofday(&begin, 0);
+
+    #pragma omp parallel for collapse(2) schedule(static, 250) shared(A, B, C) private(rowIndex, columnIndex, newElement, i) default(none)
     for (rowIndex = 0; rowIndex < C.numberOfRows; ++rowIndex) {
         for (columnIndex = 0; columnIndex < C.numberOfColumns; ++columnIndex) {
             newElement = 0;
-            // printf("Got indeces (%d, %d) in thread %d\n", rowIndex, columnIndex, omp_get_thread_num());
             for (i = 0; i < A.numberOfColumns; ++i) {
                 newElement += getMatrixElement(&A, rowIndex, i) * getMatrixElement(&B, i, columnIndex);
             }
@@ -49,11 +67,17 @@ int main(int argc, char **argv) {
         }
     }
 
+    gettimeofday(&end, 0);
+    long seconds = end.tv_sec - begin.tv_sec;
+    long microseconds = end.tv_usec - begin.tv_usec;
+    double elapsed = seconds + microseconds * 1e-6;
+    printf("Elapsed time equals %.20fs\n", elapsed);
+
     FILE *file = fopen("c_matrix.dat", "r");
     if (file) {
         Matrix oneThreadCalculated = createMatrix(rowsInA, columnsInB);
         loadMatrixFromFile(&oneThreadCalculated, file);
-        if (!areMatricesEqual(C, oneThreadCalculated)) {
+        if (areMatricesEqual(C, oneThreadCalculated) == 0) {
             fprintf(stderr, "Result is incorrect!\n");
         }
         deleteMatrix(&oneThreadCalculated);
