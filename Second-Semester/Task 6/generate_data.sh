@@ -1,7 +1,7 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 get_usage_message() {
-    echo "Usage: ./generate_data.sh [number: 1000 by default]"
+    echo "Usage: ./generate_data.sh NUMBER [1000 by default]"
 }
 
 if [[ "$#" == 0 ]]; then

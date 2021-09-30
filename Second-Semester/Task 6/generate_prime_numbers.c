@@ -9,7 +9,7 @@ void sieveOfEratosthenes(int *numbers, int n) {
 
     int prime = 2;
     while (1) {
-        int tmp = prime * 2;
+        int tmp = prime * prime;
         if (tmp > n) {
             break;
         }
@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     } else {
         n = atoi(argv[1]);
         if (n < 1) {
-            fprintf(stderr, "Value from stdin: %d < 1\n", n);
+            fprintf(stderr, "Invalid value from stdin: %d < 1\n", n);
             n = 100;
         }
     }
@@ -47,6 +47,10 @@ int main(int argc, char **argv) {
 
     int *numbers = (int *) calloc(n - 1, sizeof(int));
     assert(numbers);
+
+    struct timeval begin, end;
+    gettimeofday(&begin, 0);
+
     numbers[0] = 2;
     for (int i = 3; i <= n; ++i) {
         if (i % 2 == 1) {
@@ -55,10 +59,6 @@ int main(int argc, char **argv) {
             numbers[i - 2] = -1;
         }
     }
-
-    struct timeval begin, end;
-    gettimeofday(&begin, 0);
-
     sieveOfEratosthenes(numbers, n);
 
     gettimeofday(&end, 0);

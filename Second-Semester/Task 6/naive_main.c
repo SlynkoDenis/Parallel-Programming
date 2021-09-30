@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     } else {
         n = atoi(argv[1]);
         if (n < 1) {
-            fprintf(stderr, "Value from stdin: %d < 1\n", n);
+            fprintf(stderr, "Invalid value from stdin: %d < 1\n", n);
             n = 1000;
         }
     }
@@ -47,10 +47,13 @@ int main(int argc, char **argv) {
 
     int i = 0;
 
+    // time measurement
     struct timeval begin, end;
     gettimeofday(&begin, 0);
 
-    #pragma omp parallel for shared(numbers, n) private(i) default(none)
+    // computations aren't equally loaded for different i (the bigger i the harder computation).
+    // Guided scheduling is used to alleviate the effect
+    #pragma omp parallel for schedule(guided) shared(numbers, n) private(i) default(none)
     for (i = 0; i < n - 1; ++i) {
         if (isPrime(i + 2)) {
             numbers[i] = i + 2;
@@ -59,13 +62,14 @@ int main(int argc, char **argv) {
         }
     }
 
+    // time measurement
     gettimeofday(&end, 0);
     long seconds = end.tv_sec - begin.tv_sec;
     long microseconds = end.tv_usec - begin.tv_usec;
     double elapsed = seconds + microseconds * 1e-6;
     printf("Elapsed time equals %.20f\n", elapsed);
 
-
+    // validation part
     FILE *file = fopen("result.dat", "r");
     if (file) {
         for (int i = 0, end_index = n - 1; i < end_index; ++i) {

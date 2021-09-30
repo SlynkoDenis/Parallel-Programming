@@ -4,6 +4,8 @@ Program multiplies matrices with randomly generated integer elements.
 
 ## Performance analysis
 
+**(\* task condition is satisfied)**
+
 Runs were conducted on matrices of size 1000 x 1000.
 Static and dynamic schedulings were run with batches
 of size `dimension / N_opt = 250`, where `N_opt = 4` - number of cores.

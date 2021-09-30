@@ -1,7 +1,7 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 get_usage_message() {
-    echo "Usage: ./build.sh [filename: a.out by default]"
+    echo "Usage: ./build.sh FILENAME [a.out by default]"
 }
 
 FILENAME=$1
