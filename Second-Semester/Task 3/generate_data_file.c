@@ -11,21 +11,21 @@ int main(int argc, char **argv) {
         array[i] = i;
     }
 
-    float *bArray = (float*) calloc(n, sizeof(float));
+    long *bArray = (long*) calloc(n, sizeof(long));
     assert(bArray);
-    bArray[0] = bArray[n - 1] = 0.0F;
+    bArray[0] = bArray[n - 1] = 0;
     
     int i = 1;
     int end_index = n - 1;
 
     for (i = 1; i < end_index; ++i) {
-        bArray[i] = (array[i - 1] * array[i] * array[i + 1]) / 3.0F;
+        bArray[i] = (long)array[i - 1] * array[i] * array[i + 1] / 3;
     }
 
     FILE *file = fopen("result.dat", "w");
     assert(file);
     for (i = 0; i < n; ++i) {
-        fprintf(file, "%f ", bArray[i]);
+        fprintf(file, "%ld ", bArray[i]);
     }
     fclose(file);
 
