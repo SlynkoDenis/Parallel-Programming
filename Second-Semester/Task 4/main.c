@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    // Initialize dimensions of the matrices
     int rowsInA = atoi(argv[1]);
     if (rowsInA <= 0) {
         fprintf(stderr, "Incorrect value was used as number of rows in A; got %d <= 0\n", rowsInA);
@@ -27,6 +28,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    // Read A from file and init structure
     FILE *aDescriptor = fopen("a_matrix.dat", "r");
     if (!aDescriptor) {
         fprintf(stderr, "A matrix file isn't found, execution is impossible\n");
@@ -36,6 +38,7 @@ int main(int argc, char **argv) {
     loadMatrixFromFile(&A, aDescriptor);
     fclose(aDescriptor);
 
+    // Read B from file and init structure
     FILE *bDescriptor = fopen("b_matrix.dat", "r");
     if (!bDescriptor) {
         fprintf(stderr, "B matrix file isn't found, execution is impossible\n");
@@ -48,15 +51,20 @@ int main(int argc, char **argv) {
 
     Matrix C = createMatrix(rowsInA, columnsInB);
 
+    // Staff variables for loop
     int rowIndex = 0;
     int columnIndex = 0;
     int newElement = 0;
     int i = 0;
 
+    // time measuring
     struct timeval begin, end;
     gettimeofday(&begin, 0);
 
-    #pragma omp parallel for collapse(2) schedule(static, 250) shared(A, B, C) private(rowIndex, columnIndex, newElement, i) default(none)
+    // collapse(2) will force omp to parallelize 2 nested loops,
+    // otherwise only the outer loop will be parallelized.
+    // This optimizes runs with small value of C.numberOfRows
+    #pragma omp parallel for collapse(2) schedule(dynamic, 250) shared(A, B, C) private(rowIndex, columnIndex, newElement, i) default(none)
     for (rowIndex = 0; rowIndex < C.numberOfRows; ++rowIndex) {
         for (columnIndex = 0; columnIndex < C.numberOfColumns; ++columnIndex) {
             newElement = 0;
@@ -67,12 +75,14 @@ int main(int argc, char **argv) {
         }
     }
 
+    // time measuring
     gettimeofday(&end, 0);
     long seconds = end.tv_sec - begin.tv_sec;
     long microseconds = end.tv_usec - begin.tv_usec;
     double elapsed = seconds + microseconds * 1e-6;
     printf("Elapsed time equals %.20fs\n", elapsed);
 
+    // validation part
     FILE *file = fopen("c_matrix.dat", "r");
     if (file) {
         Matrix oneThreadCalculated = createMatrix(rowsInA, columnsInB);

@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 get_usage_message() {
     echo "Usage: ./generate_data.sh [rows-in-a] [columns-in-a] [columns-in-b]"
