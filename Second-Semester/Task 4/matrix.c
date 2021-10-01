@@ -90,7 +90,8 @@ void loadMatrixFromFile(Matrix *matrix, FILE *file) {
 
     for (int i = 0, end_index = matrix->numberOfRows * matrix->numberOfColumns;
          i < end_index; ++i) {
-        if (fscanf(file, "%d", matrix->elements + i)) {
+        if (fscanf(file, "%d", matrix->elements + i) != 1) {
+            fprintf(stderr, "Error while reading matrix data on position %d\n", i);
             for (int j = 0; j < end_index; ++j) {
                 matrix->elements[j] = 0;
             }

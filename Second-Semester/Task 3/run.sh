@@ -17,36 +17,41 @@ fi
 
 FIRST_ARG=$1
 FIRST_ARG_VALUE=$2
+FILENAME=a.out
 
 if [[ ($FIRST_ARG == "-not") || ($FIRST_ARG == "--number-of-threads") ]]; then
-    REG='^[0-9]+$'
-    if ! [[ $FIRST_ARG_VALUE =~ $re ]]; then
-        FIRST_ARG_VALUE=0
+    shift
+    shift
+    if [[ "$#" -ge 2 ]] && [[ ($1 == "-n") || ($1 == "--name") ]]; then
+        FILENAME=$2
+        shift
+        shift
     fi
 else
-    echo "ERROR: number-of-threads parameter wasn't provided"
+    if [[ ($FIRST_ARG == "-n") || ($FIRST_ARG == "--name") ]]; then
+        FILENAME=$FIRST_ARG_VALUE
+
+        shift
+        shift
+        if [[ ("$#" < 2) || ( ($1 != "-not") && ($1 != "--number-of-threads") ) ]]; then
+            echo "ERROR: number-of-threads parameter wasn't provided"
+            get_usage_message
+            exit 1
+        fi
+        FIRST_ARG_VALUE=$2
+        shift
+        shift
+    else
+        echo "ERROR: number-of-threads parameter wasn't provided"
+        get_usage_message
+        exit 1
+    fi
+fi
+
+if [[ ! -e $FILENAME ]]; then
+    echo "ERROR: executable file ${FILENAME} doesn't exist"
     get_usage_message
     exit 1
 fi
 
-shift
-shift
-
-FIRST_ARG=$1
-
-if [[ ("$#" < 2) || ( ($FIRST_ARG != "-n") && ($FIRST_ARG != "--name") ) ]]; then
-    if [[ $FIRST_ARG_VALUE != "0" ]]; then
-        OMP_NUM_THREADS=$FIRST_ARG_VALUE ./a.out "$@"
-    else
-        ./a.out "$@"
-    fi
-    exit 0
-fi
-
-FIRST_ARG=$2
-
-if [[ $FIRST_ARG_VALUE != "0" ]]; then
-    OMP_NUM_THREADS=$FIRST_ARG_VALUE ./${FIRST_ARG} "$@"
-else
-    ./${FIRST_ARG} "$@"
-fi
+OMP_NUM_THREADS=$FIRST_ARG_VALUE ./${FILENAME} "$@"
