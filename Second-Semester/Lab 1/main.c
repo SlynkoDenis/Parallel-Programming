@@ -21,7 +21,6 @@ int main(int argc, char **argv) {
     const char *filename = "result.txt";
     double a[ISIZE][JSIZE];
 
-    MPI_Status status;
     const int root_process = 0;
     int my_id = 0;
     int num_procs = 0;
@@ -52,11 +51,16 @@ int main(int argc, char **argv) {
         }
 
         // receive computed values from other nodes
+        MPI_Request *requests = (MPI_Request *) calloc(num_procs - 1, sizeof(MPI_Request));
+        assert(requests);
+
         for (int i = 1, end_index = num_procs - 1; i < end_index; ++i) {
-            MPI_Recv(*(a + i * delta), JSIZE * delta, MPI_DOUBLE, i, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+            MPI_Irecv(*(a + i * delta), JSIZE * delta, MPI_DOUBLE, i,
+                      MPI_ANY_TAG, MPI_COMM_WORLD, requests + i - 1);
         }
-        MPI_Recv(*(a + (num_procs - 1) * delta), JSIZE * (ISIZE - delta * (num_procs - 1)), MPI_DOUBLE,
-                 num_procs - 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Irecv(*(a + (num_procs - 1) * delta), JSIZE * (ISIZE - delta * (num_procs - 1)), MPI_DOUBLE,
+                  num_procs - 1, MPI_ANY_TAG, MPI_COMM_WORLD, requests + num_procs - 2);
+        MPI_Waitall(num_procs - 1, requests, MPI_STATUSES_IGNORE);
 
         // time measurement
         gettimeofday(&end, 0);
@@ -90,6 +94,7 @@ int main(int argc, char **argv) {
                 }
             }
             fclose(fd);
+            free(requests);
         } else {
             fprintf(stderr, "Failed to open file %s\n", filename);
         }
