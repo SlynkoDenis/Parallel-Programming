@@ -15,4 +15,4 @@ if [[ -z $FILENAME ]]; then
     FILENAME=a.out
 fi
 
-gcc -fopenmp main.c -o $FILENAME
+mpicc -fopenmp main.c -Wall -Werror -o $FILENAME -lm || exit 1

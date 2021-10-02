@@ -54,4 +54,4 @@ if [[ ! -e $FILENAME ]]; then
     exit 1
 fi
 
-OMP_NUM_THREADS=$FIRST_ARG_VALUE ./${FILENAME} "$@"
+mpirun -np $FIRST_ARG_VALUE ./${FILENAME} "$@" || exit 1
