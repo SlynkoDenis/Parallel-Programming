@@ -90,6 +90,15 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Result data file isn't found, validation is impossible. Please generate file with generate_data.sh script\n");
     }
 
+    // count total amount of primes
+    int number_of_primes = 0;
+    for (int i = 0, end_index = n - 1; i < end_index; ++i) {
+        if (numbers[i] != -1) {
+            ++number_of_primes;
+        }
+    }
+    printf("Totally got %d prime numbers less or equal than %d\n", number_of_primes, n);
+
     free(numbers);
     return 0;
 }

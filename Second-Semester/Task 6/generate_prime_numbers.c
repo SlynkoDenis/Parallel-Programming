@@ -67,15 +67,19 @@ int main(int argc, char **argv) {
     double elapsed = seconds + microseconds * 1e-6;
     printf("Elapsed time equals %.20f\n", elapsed);
 
+    int number_of_primes = 0;
 
     FILE *file = fopen("result.dat", "w");
     assert(file);
     for (int i = 0, end_index = n - 1; i < end_index; ++i) {
         if (numbers[i] != -1) {
+            ++number_of_primes;
             fprintf(file, "%d ", numbers[i]);
         }
     }
     fclose(file);
+
+    printf("Totally got %d prime numbers less or equal than %d\n", number_of_primes, n);
 
     free(numbers);
     return 0;
