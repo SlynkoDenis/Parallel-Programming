@@ -119,7 +119,7 @@ void omp_quicksort(int *array, int n) {
     #pragma omp parallel
     {
         // the first call must be done only in one thread
-        #pragma omp single
+        #pragma omp single nowait
         {
             staff_quicksort(array, 0, n - 1);
         }
