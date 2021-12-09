@@ -1,9 +1,31 @@
+#!/bin/python3
+import re
+import subprocess
 import matplotlib.pyplot as plt
 
 
+def get_elapsed_time(cmd):
+    process = subprocess.run(cmd, shell=True, capture_output=True)
+    output = process.stdout.decode('ascii')
+    time_elapsed = re.findall(r'Time elapsed ?([0-9]+.[0-9]+)s\n', output)
+    return float(time_elapsed[0])
+
+
+def average_time(cmd):
+    average = 0.0
+    n = 5
+    for _ in range(n):
+        average += get_elapsed_time(cmd)
+    return average / n
+
+
 x_axis = list(range(2, 13))
-seq_time = 0.009093
-y_axis = list(seq_time / x for x in [0.015795, 0.007666, 0.0067159, 0.00585, 0.005705, 0.0053699, 0.0053159, 0.0064359, 0.00657399, 0.00617399, 0.007208])
+seq_time = 0.0106409
+runtimes = list(average_time(f'./run.sh -not {x}') for x in x_axis)
+y_axis = list(seq_time / runtimes[i] for i in range(len(runtimes)))
+
+print('Runtimes taken for number of processes in range', x_axis)
+print(runtimes)
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
